@@ -1,0 +1,37 @@
+{
+  "name": "vpn-server",
+  "version": "2.0.0",
+  "description": "Modular WebRTC signaling, Voice Chat, and Virtual LAN server built with Express and Socket.IO",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test tests/**/*.test.js",
+    "client:install": "npm --prefix client install",
+    "client:dev": "npm --prefix client run dev",
+    "client:build": "npm --prefix client run build"
+  },
+  "keywords": [
+    "webrtc",
+    "voice-chat",
+    "vpn",
+    "virtual-lan",
+    "socket.io",
+    "express",
+    "signaling-server"
+  ],
+  "author": "Mohamed Nasr",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^18.0.5",
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.4"
+  }
+}
