@@ -1,5 +1,5 @@
 {
-  "name": "vpn-server",
+  "name": "mesh-lan",
   "version": "2.0.0",
   "description": "Modular WebRTC signaling, Voice Chat, and Virtual LAN server built with Express and Socket.IO",
   "type": "module",

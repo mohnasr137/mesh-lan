@@ -15,7 +15,7 @@ initializeSockets(io);
 
 // Start server
 server.listen(config.PORT, config.HOST, () => {
-  logger.info(`Voice & WebRTC VPN Server running at http://${config.HOST}:${config.PORT}`);
+  logger.info(`Voice & WebRTC MeshLAN Server running at http://${config.HOST}:${config.PORT}`);
   logger.info(`Health check: http://${config.HOST === "0.0.0.0" ? "localhost" : config.HOST}:${config.PORT}/health`);
   logger.info(`Environment: ${config.NODE_ENV}`);
 });

@@ -10,7 +10,7 @@ import roomService from "../services/roomService.js";
 import userService from "../services/userService.js";
 import matchmakingService from "../services/matchmakingService.js";
 
-describe("VPN Server Test Suite", () => {
+describe("MeshLAN Server Test Suite", () => {
   let server;
   let io;
   let port;
@@ -43,7 +43,14 @@ describe("VPN Server Test Suite", () => {
     });
   });
 
-  describe("REST API Endpoints", () => {
+  describe("REST API Endpoints & Static UI", () => {
+    test("GET / serves the WebRTC Client UI", async () => {
+      const res = await fetch(`${baseUrl}/`);
+      assert.equal(res.status, 200);
+      const text = await res.text();
+      assert(text.includes("MeshLAN"));
+    });
+
     test("GET /health returns health metrics", async () => {
       const res = await fetch(`${baseUrl}/health`);
       assert.equal(res.status, 200);
@@ -92,7 +99,6 @@ describe("VPN Server Test Suite", () => {
     });
 
     test("POST /api/rooms creates and verifies a private room", async () => {
-      // 1. Create private room
       const createRes = await fetch(`${baseUrl}/api/rooms`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -106,7 +112,6 @@ describe("VPN Server Test Suite", () => {
       const createData = await createRes.json();
       const roomId = createData.room.id;
 
-      // 2. Verify with wrong password
       const wrongRes = await fetch(`${baseUrl}/api/rooms/${roomId}/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -116,7 +121,6 @@ describe("VPN Server Test Suite", () => {
       const wrongData = await wrongRes.json();
       assert.equal(wrongData.success, false);
 
-      // 3. Verify with correct password
       const rightRes = await fetch(`${baseUrl}/api/rooms/${roomId}/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -156,43 +160,38 @@ describe("VPN Server Test Suite", () => {
       });
     });
 
-    test("Users join room, receive notifications, and leave room", async () => {
-      const room = await roomService.createRoom({ name: "Gaming Room" });
-
+    test("Client UI flow: create-room, user-joined dictionary, and signal relay", async () => {
       const client1 = Client(baseUrl, { reconnection: false });
       const client2 = Client(baseUrl, { reconnection: false });
 
       await new Promise((resolve) => {
         client1.on("connect", () => {
-          client1.emit("join", { username: "Player1" });
+          // Frontend client creates room with roomName and username
+          client1.emit("create-room", "LAN_Arena", "HostUser");
         });
 
-        client1.on("joined", () => {
-          client1.emit("join_room", { roomId: room.id });
+        client1.on("room-created", (roomName) => {
+          assert.equal(roomName, "LAN_Arena");
+          // Connect second client
+          client2.emit("join-room", "LAN_Arena", "GuestUser");
         });
 
-        client1.on("room_joined", (data) => {
-          assert.equal(data.roomName, "Gaming Room");
-          // Connect Player2 now
-          client2.emit("join", { username: "Player2" });
+        // Client 1 should receive user-joined with users object
+        client1.on("user-joined", (data) => {
+          assert(typeof data.users === "object");
+          const usersList = Object.values(data.users);
+          assert(usersList.length >= 1);
+
+          // Test WebRTC signaling between client 1 and client 2
+          client1.emit("signal", {
+            to: client2.id,
+            signal: { type: "offer", sdp: "dummy-sdp-data" },
+          });
         });
 
-        client2.on("connect", () => {});
-
-        client2.on("joined", () => {
-          client2.emit("join_room", { roomId: room.id });
-        });
-
-        // Player1 should receive notification that Player2 joined
-        client1.on("user_joined", (data) => {
-          assert.equal(data.username, "Player2");
-          assert.equal(data.participantCount, 2);
-
-          // Player1 leaves room
-          client1.emit("leave_room");
-        });
-
-        client1.on("room_left", () => {
+        client2.on("signal", (data) => {
+          assert.equal(data.from, client1.id);
+          assert.equal(data.signal.type, "offer");
           client1.disconnect();
           client2.disconnect();
           resolve();
@@ -214,7 +213,6 @@ describe("VPN Server Test Suite", () => {
         });
 
         userA.on("waiting_for_partner", () => {
-          // Now User B joins
           userB.emit("join", { username: "MatchB" });
         });
 

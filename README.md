@@ -1,6 +1,8 @@
-# VPN Server (WebRTC Signaling, Voice Chat & Virtual LAN)
+# MeshLAN (WebRTC Signaling, Voice Chat & Virtual LAN)
 
 A modular, high-performance WebRTC signaling and real-time voice chat server built with **Node.js**, **Express**, and **Socket.IO**.
+
+![MeshLAN Home Interface](./home.png)
 
 ---
 
@@ -33,7 +35,7 @@ A modular, high-performance WebRTC signaling and real-time voice chat server bui
 ## 📁 Project Structure
 
 ```
-vpn/
+mesh-lan/
 ├── app.js                # Express app factory (middleware, routes, error handlers)
 ├── server.js             # Server entry point & graceful shutdown
 ├── config/
@@ -70,6 +72,7 @@ vpn/
 │   └── server.test.js    # Automated Node.js native test suite
 ├── .env.example          # Environment variables template
 ├── .gitignore            # Git ignore configuration
+├── home.png              # MeshLAN interface screenshot preview
 ├── package.json          # Project metadata & scripts
 └── README.md             # Project documentation
 ```

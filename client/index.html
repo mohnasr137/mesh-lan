@@ -1,110 +1,842 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Virtual LAN Gaming</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        .connection-form {
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        input, button {
-            padding: 8px;
-            margin: 5px 0;
-        }
-        button {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #45a049;
-        }
-        #users-container {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-top: 20px;
-        }
-        #game-list {
-            margin-top: 20px;
-        }
-        .game-item {
-            padding: 10px;
-            margin: 5px 0;
-            background: #f9f9f9;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        .game-item:hover {
-            background: #f0f0f0;
-        }
-        #network-stats {
-            margin-top: 20px;
-            padding: 10px;
-            background: #f5f5f5;
-            border-radius: 5px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeshLAN — WebRTC Virtual LAN & Voice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --bg-surface: #111827;
+      --bg-card: #1e293b;
+      --bg-card-hover: #283548;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: #6366f1;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-glow: rgba(99, 102, 241, 0.35);
+      --accent: #06b6d4;
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.3);
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.08) 0%, transparent 40%);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+    }
+
+    /* Container */
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Header */
+    header.app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .brand-title h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title p {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--success);
+      transition: all 0.3s ease;
+    }
+
+    .status-badge.connecting {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.25);
+      color: var(--warning);
+    }
+
+    .status-badge.disconnected {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.25);
+      color: var(--danger);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    /* Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 4px;
+    }
+
+    .tab-button {
+      padding: 10px 18px;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .tab-button:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .tab-button.active {
+      color: #fff;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Content Layout */
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Forms */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .input-field {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .input-field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    .input-field::placeholder {
+      color: var(--text-dim);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      border: none;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+
+    /* Public Rooms List */
+    .room-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .room-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      transition: all 0.2s ease;
+    }
+
+    .room-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      background: var(--bg-card-hover);
+    }
+
+    .room-card-info h4 {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .room-meta {
+      display: flex;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-primary {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--primary);
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+    }
+
+    /* In-Room Screen */
+    #room-info {
+      display: none;
+    }
+
+    .room-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+
+    .room-details h2 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .ip-badge {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--accent);
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      display: inline-block;
+      margin-top: 6px;
+    }
+
+    .room-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr 280px;
+      gap: 20px;
+    }
+
+    @media (max-width: 1000px) {
+      .room-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* User List */
+    .user-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .user-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .user-item.self {
+      border-color: rgba(99, 102, 241, 0.4);
+      background: rgba(99, 102, 241, 0.08);
+    }
+
+    .user-pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+    }
+
+    /* P2P Chat Box */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 380px;
+      gap: 12px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .chat-msg {
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .chat-msg strong {
+      color: var(--accent);
+      margin-right: 6px;
+    }
+
+    .chat-msg.system {
+      color: var(--text-dim);
+      font-style: italic;
+      font-size: 12px;
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Stat Box */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13px;
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-val {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* Games list */
+    .game-item {
+      padding: 12px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .game-item:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent);
+    }
+
+    /* Matchmaking Screen */
+    .match-hero {
+      text-align: center;
+      padding: 48px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .radar-pulse {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.15);
+      border: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      animation: pulse 2s infinite ease-out;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.6); }
+      70% { box-shadow: 0 0 0 25px rgba(99, 102, 241, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+    }
+
+    /* Telemetry Grid */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .telemetry-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .telemetry-card h5 {
+      font-size: 12px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .telemetry-num {
+      font-family: var(--font-mono);
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
-    <h1>Virtual LAN Gaming</h1>
-    
-    <div class="connection-form">
-        <h2>Join or Create Virtual LAN</h2>
-        <div>
-            <input type="text" id="username" placeholder="Your Username" required>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-title">
+          <h1>MeshLAN</h1>
+          <p>WebRTC Virtual LAN & Voice Signaling</p>
         </div>
-        <div>
-            <input type="text" id="room-name" placeholder="Room Name" required>
+      </div>
+      <div class="header-status">
+        <div id="status-badge" class="status-badge connecting">
+          <span class="status-dot"></span>
+          <span id="status-text">Connecting...</span>
         </div>
-        <div>
-            <button id="create-btn">Create Room</button>
-            <button id="join-btn">Join Room</button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-button active" data-tab="tab-lan">🎮 Virtual LAN</button>
+      <button class="tab-button" data-tab="tab-match">🎲 1-on-1 Voice Match</button>
+      <button class="tab-button" data-tab="tab-telemetry">📊 Server Health</button>
+    </nav>
+
+    <!-- TAB 1: VIRTUAL LAN -->
+    <div id="tab-lan" class="tab-content active">
+      <!-- Connection / Room Setup Screen -->
+      <div id="connection-form">
+        <div class="grid-2">
+          <!-- Room Action Card -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Join or Host a Virtual LAN</div>
+              <span class="badge badge-primary">P2P Mesh</span>
+            </div>
+            <div class="form-group">
+              <label for="username">Your Nickname</label>
+              <input type="text" id="username" class="input-field" placeholder="e.g. Maverick" required>
+            </div>
+            <div class="form-group">
+              <label for="room-name">Room Name</label>
+              <input type="text" id="room-name" class="input-field" placeholder="e.g. Contra_LAN" required>
+            </div>
+            <div class="form-group">
+              <label for="room-password">Password (Optional)</label>
+              <input type="password" id="room-password" class="input-field" placeholder="Leave empty for public">
+            </div>
+            <div class="btn-group">
+              <button id="create-btn" class="btn btn-primary" style="flex: 1;">Create Room</button>
+              <button id="join-btn" class="btn btn-secondary" style="flex: 1;">Join Room</button>
+            </div>
+          </div>
+
+          <!-- Public Rooms Browser Card -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Active Public Rooms</div>
+              <button id="refresh-rooms-btn" class="btn btn-secondary btn-sm">Refresh</button>
+            </div>
+            <div id="room-list" class="room-list">
+              <div style="color: var(--text-dim); font-size: 13px; text-align: center; padding: 20px;">
+                Scanning for active rooms...
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
-    
-    <div id="room-info" style="display: none;">
-        <h2>Connected to: <span id="current-room"></span></h2>
-        <p>Your Virtual IP: <span id="virtual-ip">Not assigned yet</span></p>
-        <button id="disconnect-btn">Disconnect</button>
-        
-        <div id="users-container">
-            <h3>Connected Users</h3>
-            <ul id="users-list"></ul>
+      </div>
+
+      <!-- In-Room Active View -->
+      <div id="room-info">
+        <div class="room-header-bar">
+          <div class="room-details">
+            <h2>Room: <span id="current-room"></span></h2>
+            <div class="ip-badge">Virtual IP: <span id="virtual-ip">10.0.0.1</span></div>
+          </div>
+          <button id="disconnect-btn" class="btn btn-danger">Leave Room</button>
         </div>
-        
-        <div id="game-list">
-            <h3>Compatible Games</h3>
-            <div class="game-item" data-game="contra">Contra</div>
+
+        <div class="room-grid">
+          <!-- Left: User List -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Connected Peers</div>
+              <span id="user-count-badge" class="badge badge-success">1 online</span>
+            </div>
+            <ul id="users-list" class="user-list"></ul>
+          </div>
+
+          <!-- Middle: P2P Data & Chat -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">WebRTC Data Channel Chat</div>
+              <span class="badge badge-primary">Direct P2P</span>
+            </div>
+            <div class="chat-container">
+              <div id="chat-messages" class="chat-messages">
+                <div class="chat-msg system">Connected to room data channel. Messages are sent peer-to-peer.</div>
+              </div>
+              <div class="chat-input-row">
+                <input type="text" id="chat-input" class="input-field" placeholder="Type a message to peers...">
+                <button id="chat-send-btn" class="btn btn-primary btn-sm">Send</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Network Stats & Games -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Network Diagnostics</div>
+            </div>
+            <div>
+              <div class="stat-row">
+                <span>Topology:</span>
+                <span id="connection-type" class="stat-val">P2P Mesh</span>
+              </div>
+              <div class="stat-row">
+                <span>Latency:</span>
+                <span id="latency" class="stat-val">-</span>
+              </div>
+              <div class="stat-row">
+                <span>Packet Loss:</span>
+                <span id="packet-loss" class="stat-val">0.0%</span>
+              </div>
+            </div>
+
+            <div style="margin-top: 10px;">
+              <h5 style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">Compatible LAN Games</h5>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="game-item" data-game="Contra">
+                  <span>🕹️ Contra (NES LAN)</span>
+                  <span class="badge badge-primary">Ready</span>
+                </div>
+                <div class="game-item" data-game="Doom">
+                  <span>💥 Doom (IPX / UDP)</span>
+                  <span class="badge badge-primary">Ready</span>
+                </div>
+                <div class="game-item" data-game="Quake">
+                  <span>⚔️ Quake III Arena</span>
+                  <span class="badge badge-primary">Ready</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        
-        <div id="network-stats">
-            <h3>Network Statistics</h3>
-            <p>Connection Type: <span id="connection-type">-</span></p>
-            <p>Latency: <span id="latency">-</span></p>
-            <p>Packet Loss: <span id="packet-loss">-</span></p>
-        </div>
+      </div>
     </div>
 
-    <!-- Replace this line -->
-    <!-- <script src="/socket.io/socket.io.js"></script> -->
-    
-    <!-- With this line -->
-    <!-- <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script> -->
-    <script src="./src/client.js" type="module"></script>
+    <!-- TAB 2: 1-ON-1 RANDOM VOICE MATCHMAKING -->
+    <div id="tab-match" class="tab-content">
+      <div class="card match-hero">
+        <div class="radar-pulse">🎙️</div>
+        <div>
+          <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 6px;">Instant 1-on-1 Voice & Chat</h2>
+          <p style="color: var(--text-muted); font-size: 14px;">Meet a random partner across the WebRTC mesh network</p>
+        </div>
+
+        <div id="match-idle-view">
+          <div class="form-group" style="max-width: 300px; margin: 0 auto 16px;">
+            <input type="text" id="match-username" class="input-field" placeholder="Enter your nickname">
+          </div>
+          <button id="start-match-btn" class="btn btn-primary" style="padding: 14px 32px; font-size: 16px;">
+            Find Random Partner
+          </button>
+        </div>
+
+        <div id="match-waiting-view" style="display: none;">
+          <p style="color: var(--accent); font-weight: 600; margin-bottom: 12px;">Searching queue for an available peer...</p>
+          <button id="cancel-match-btn" class="btn btn-secondary btn-sm">Cancel</button>
+        </div>
+
+        <div id="match-active-view" style="display: none; width: 100%; max-width: 500px;">
+          <div style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 16px;">
+            <span class="badge badge-success" style="margin-bottom: 8px;">Connected to Partner</span>
+            <h3 id="partner-name" style="font-size: 20px; font-weight: 800;">Player</h3>
+            <div id="match-timer" style="font-family: var(--font-mono); font-size: 14px; color: var(--text-dim); margin-top: 4px;">00:00</div>
+          </div>
+          <div class="btn-group">
+            <button id="next-match-btn" class="btn btn-primary" style="flex: 1;">Next Partner</button>
+            <button id="end-match-btn" class="btn btn-danger" style="flex: 1;">End Call</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: SERVER TELEMETRY & HEALTH -->
+    <div id="tab-telemetry" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Live Server Telemetry</div>
+          <button id="refresh-health-btn" class="btn btn-secondary btn-sm">Refresh Now</button>
+        </div>
+        <div class="telemetry-grid">
+          <div class="telemetry-card">
+            <h5>Status</h5>
+            <div id="telemetry-status" class="telemetry-num" style="color: var(--success); font-size: 20px;">ONLINE</div>
+          </div>
+          <div class="telemetry-card">
+            <h5>Active Sockets</h5>
+            <div id="telemetry-users" class="telemetry-num">0</div>
+          </div>
+          <div class="telemetry-card">
+            <h5>Active Rooms</h5>
+            <div id="telemetry-rooms" class="telemetry-num">0</div>
+          </div>
+          <div class="telemetry-card">
+            <h5>Match Queue</h5>
+            <div id="telemetry-queue" class="telemetry-num">0</div>
+          </div>
+          <div class="telemetry-card">
+            <h5>Uptime</h5>
+            <div id="telemetry-uptime" class="telemetry-num" style="font-size: 20px;">0s</div>
+          </div>
+          <div class="telemetry-card">
+            <h5>RAM Heap</h5>
+            <div id="telemetry-memory" class="telemetry-num" style="font-size: 20px;">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./src/client.js" type="module"></script>
 </body>
 </html>
